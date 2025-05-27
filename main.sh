@@ -1,36 +1,11 @@
 #!/bin/bash
 
+source ./backup_utils.sh
+
 if [[ ! -e backup.conf ]]; then
   echo "Config file does not exist"
   exit 1 
 fi
-
-CONFIG_FILE="./backup.conf"
-declare -a SOURCE_DIRS
-declare BACKUP_DEST
-declare BACKUP_MODE
-
-get_cfg_variables(){
-  SOURCE_DIRS=()
-  BACKUP_DEST=""
-  BACKUP_MODE=""
-  while read -r line; do
-    if [[ "$line" =~ SOURCE_DIRS ]]; then
-      while read -r sub_line; do
-        if [[ "$sub_line" =~ \) ]]; then
-          break
-        fi
-        SOURCE_DIRS+=("$(echo "$sub_line" | tr -d '" ')")
-      done
-    fi
-    if [[ "$line" =~ BACKUP_DEST ]]; then
-      BACKUP_DEST=$(echo "$line" | cut -d= -f2- | tr -d '"')
-    fi
-    if [[ "$line" =~ MODE ]]; then
-      BACKUP_MODE=$(echo "$line" | cut -d= -f2- | tr -d '"')
-    fi
-  done < "$CONFIG_FILE"
-}
 
 main_menu(){
   options=("Directories to backup" "Save destination" "Change backup frequency" "All settings" "Exit")
