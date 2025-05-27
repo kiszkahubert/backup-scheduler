@@ -8,7 +8,7 @@ if [[ ! -e backup.conf ]]; then
 fi
 
 main_menu(){
-  options=("Directories to backup" "Save destination" "Change backup frequency" "All settings" "Exit")
+  options=("Directories to backup" "Save destination" "Change backup frequency" "All settings" "Exit and save")
   selected=0
   while true; do
     ((selected < 0)) && selected=0
@@ -33,7 +33,7 @@ main_menu(){
         1) save_destination;;
         2) change_backup_frequency;; 
         3) all_settings;;
-        4) exit 0;;
+        4) update_crontab && exit 0;;
       esac
     fi
   done
@@ -201,17 +201,22 @@ add_folder_to_backup(){
   clear
   read -p "Provide absolute path to directory: " dir
   expanded_dir=$(eval echo "$dir")
-    if [[ ! -d "$expanded_dir" ]]; then
+  existing_dirs=$(awk '/SOURCE_DIRS=\(/,/\)/' backup.conf | grep -o '".*"' | tr -d '"')
+  if [[ ! -d "$expanded_dir" ]]; then
     echo "Provided path does not exist!"
     sleep 1
     source_settings
   fi
-  if grep -q "$expanded_dir" backup.conf; then
-    sed -i "/SOURCE_DIRS=(/a \ \ \"$expanded_dir\"" backup.conf
-    echo "Folder added"
-  else
-    echo "Folder already exists"
-  fi
+  for existing in $existing_dirs; do
+    if [[ "$existing" == "$expanded_dir" ]]; then
+      echo "Folder already exists"
+      sleep 1
+      source_settings
+      return
+    fi
+  done
+  sed -i "/SOURCE_DIRS=(/a \ \ \"$expanded_dir\"" backup.conf
+  echo "Folder added"
   sleep 1
 }
 remove_folders_from_backup(){
